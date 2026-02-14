@@ -2,7 +2,6 @@
 
 A browser-based photobooth application that recreates the nostalgic experience of classic photo strip booths from the 1960s-1980s. Built with vanilla JavaScript, HTML5, and CSS3.
 
-**Live Demo:** [https://deznow.github.io/vintage-photomaton](https://deznow.github.io/photomaton)
 
 ---
 
@@ -72,7 +71,7 @@ Then navigate to `http://localhost:8000` in your browser.
 
 ### Option 3: GitHub Pages
 
-Visit the live demo at [https://deznow.github.io/vintage-photomaton](https://deznow.github.io/vintage-photomaton)
+
 
 ---
 
@@ -176,7 +175,7 @@ Contributions are welcome. Please follow these guidelines:
 ### Development Setup
 
 ```bash
-git clone https://github.com/deznow/vintage-photomaton.git
+git clone https://github.com/deznow/photomaton.git
 cd vintage-photomaton
 git checkout -b feature/your-feature-name
 ```
@@ -219,7 +218,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ## Support
 
-- Report bugs via [GitHub Issues](https://github.com/deznow/vintage-photomaton/issues)
+- Report bugs via [GitHub Issues]
 - Request features through the issue tracker
 - Use GitHub Discussions for questions and community chat
 
