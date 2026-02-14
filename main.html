@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<!--
+    Vintage Photomaton
+    Created by @dezsnow/zine
+    A nostalgic photobooth web application
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📷 Vintage Photomaton</title>
+    <style>
+        .footer-credit {
+    position: fixed;
+    bottom: 10px;
+    right: 15px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75em;
+    color: rgba(139, 69, 19, 0.3);
+    pointer-events: none;
+    user-select: none;
+    z-index: 1;
+}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: #f5e6d3;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            color: #8b4513;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #a0522d;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        .camera-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: filter 0.3s ease;
+        }
+        
+        #video.filter-sepia { filter: sepia(100%) brightness(1.1); }
+        #video.filter-blackwhite { filter: grayscale(100%) contrast(1.2); }
+        #video.filter-vintage { filter: sepia(50%) contrast(1.1) brightness(1.05) saturate(1.2); }
+        #video.filter-warm { filter: sepia(30%) saturate(1.4) brightness(1.1); }
+        #video.filter-cool { filter: hue-rotate(180deg) saturate(1.2); }
+        #video.filter-dreamy { filter: contrast(0.9) brightness(1.2) saturate(1.3); }
+        #video.filter-nostalgia { filter: sepia(80%) contrast(1.1) saturate(0.8); }
+        #video.filter-polaroid { filter: contrast(1.2) brightness(1.1) saturate(1.1); }
+        #video.filter-sunset { filter: sepia(40%) hue-rotate(-10deg) saturate(1.5); }
+        #video.filter-moonlight { filter: grayscale(30%) brightness(0.95) contrast(1.1) hue-rotate(190deg); }
+
+        #canvas {
+            display: none;
+        }
+
+        .countdown-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .countdown-overlay.active {
+            display: flex;
+        }
+
+        .countdown-number {
+            font-size: 120px;
+            color: white;
+            font-weight: bold;
+            animation: pulse 1s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.8; }
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: #d2691e;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #a0522d;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        .btn-secondary {
+            background: #8b4513;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #654321;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .filter-btn {
+            padding: 10px 5px;
+            background: white;
+            border: 3px solid #d2691e;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            font-weight: bold;
+            color: #8b4513;
+        }
+
+        .filter-btn:hover {
+            background: #fff5ee;
+            transform: scale(1.05);
+        }
+
+        .filter-btn.active {
+            background: #d2691e;
+            color: white;
+        }
+
+        .photos-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .photos-section h2 {
+            color: #8b4513;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .photo-strip {
+            background: #f0f0f0;
+            border: 5px solid #8b4513;
+            border-radius: 10px;
+            padding: 15px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .photo-item {
+            width: 100%;
+            border: 3px solid white;
+            border-radius: 5px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            animation: photoAppear 0.5s ease-out;
+        }
+
+        @keyframes photoAppear {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .photo-count {
+            text-align: center;
+            color: #8b4513;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .download-btn {
+            width: 100%;
+            margin-top: 15px;
+            padding: 12px;
+            background: #228b22;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .download-btn:hover {
+            background: #006400;
+            transform: translateY(-2px);
+        }
+
+        .download-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 9999;
+        }
+
+        .flash.active {
+            animation: flashAnimation 0.3s ease-out;
+        }
+
+        @keyframes flashAnimation {
+            0% { opacity: 0; }
+            50% { opacity: 0.9; }
+            100% { opacity: 0; }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📷 Vintage Photomaton 📷</h1>
+            <p>Strike a pose! Create your retro photo strip ✨</p>
+        </div>
+
+        <div class="main-content">
+            <div class="camera-section">
+                <div class="video-container">
+                    <video id="video" autoplay playsinline></video>
+                    <div id="countdown" class="countdown-overlay">
+                        <div class="countdown-number" id="countdownNumber">3</div>
+                    </div>
+                </div>
+                <canvas id="canvas"></canvas>
+
+                <div class="controls">
+                    <button class="btn btn-primary" id="startBtn">📷 Take 4 Photos</button>
+                    <button class="btn btn-secondary" id="clearBtn">🗑️ Clear Strip</button>
+                </div>
+
+                <h3 style="color: #8b4513; margin-bottom: 10px; text-align: center;">Choose Filter:</h3>
+                <div class="filters">
+                    <button class="filter-btn active" data-filter="none">✨ Original</button>
+                    <button class="filter-btn" data-filter="sepia">🌾 Sepia</button>
+                    <button class="filter-btn" data-filter="blackwhite">🎬 B&W</button>
+                    <button class="filter-btn" data-filter="vintage">📼 Vintage</button>
+                    <button class="filter-btn" data-filter="dreamy">☁️ Dreamy</button>
+                    <button class="filter-btn" data-filter="nostalgia">💭 Nostalgia</button>
+                    <button class="filter-btn" data-filter="polaroid">📷 Polaroid</button>
+                    <button class="filter-btn" data-filter="sunset">🌅 Sunset</button>
+                    <button class="filter-btn" data-filter="moonlight">🌙 Moonlight</button>
+                </div>
+            </div>
+
+            <div class="photos-section">
+                <h2>📸 Your Strip</h2>
+                <div class="photo-strip" id="photoStrip">
+                    <!-- Photos will appear here -->
+                </div>
+                <div class="photo-count" id="photoCount">0/4 photos</div>
+                <button class="download-btn" id="downloadBtn" disabled>💾 Download Strip</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="flash" id="flash"></div>
+    <div class="footer-credit">made by @dezsnow/zine</div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const photoStrip = document.getElementById('photoStrip');
+        const photoCount = document.getElementById('photoCount');
+        const startBtn = document.getElementById('startBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const countdown = document.getElementById('countdown');
+        const countdownNumber = document.getElementById('countdownNumber');
+        const flash = document.getElementById('flash');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+
+        let photos = [];
+        let currentFilter = 'none';
+        let isCapturing = false;
+
+        // Start webcam
+        async function startWebcam() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user', width: 640, height: 480 } 
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                alert('Please allow camera access to use this app! 📷');
+                console.error('Error accessing webcam:', err);
+            }
+        }
+
+        // Apply filters
+        function applyFilter(imageData) {
+            const data = imageData.data;
+            
+            switch(currentFilter) {
+                case 'sepia':
+                    for (let i = 0; i < data.length; i += 4) {
+                        const r = data[i], g = data[i + 1], b = data[i + 2];
+                        data[i] = Math.min(255, (r * 0.393 + g * 0.769 + b * 0.189) * 1.1);
+                        data[i + 1] = Math.min(255, (r * 0.349 + g * 0.686 + b * 0.168) * 1.1);
+                        data[i + 2] = Math.min(255, (r * 0.272 + g * 0.534 + b * 0.131) * 1.1);
+                    }
+                    break;
+                    
+                case 'blackwhite':
+                    for (let i = 0; i < data.length; i += 4) {
+                        const avg = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
+                        const contrast = 1.2;
+                        data[i] = data[i + 1] = data[i + 2] = ((avg - 128) * contrast + 128);
+                    }
+                    break;
+                    
+                case 'vintage':
+                    for (let i = 0; i < data.length; i += 4) {
+                        const r = data[i], g = data[i + 1], b = data[i + 2];
+                        data[i] = Math.min(255, (r * 0.393 + g * 0.769 + b * 0.189) * 0.5 + r * 0.5) * 1.1;
+                        data[i + 1] = Math.min(255, (r * 0.349 + g * 0.686 + b * 0.168) * 0.5 + g * 0.5) * 1.05;
+                        data[i + 2] = Math.min(255, (r * 0.272 + g * 0.534 + b * 0.131) * 0.5 + b * 0.5);
+                        data[i] *= 1.1;
+                        data[i + 1] *= 1.05;
+                    }
+                    break;
+                    
+                case 'dreamy':
+                    for (let i = 0; i < data.length; i += 4) {
+                        data[i] = Math.min(255, data[i] * 1.2);
+                        data[i + 1] = Math.min(255, data[i + 1] * 1.2);
+                        data[i + 2] = Math.min(255, data[i + 2] * 1.3);
+                        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                        data[i] = data[i] * 0.7 + avg * 0.3;
+                        data[i + 1] = data[i + 1] * 0.7 + avg * 0.3;
+                        data[i + 2] = data[i + 2] * 0.7 + avg * 0.3;
+                    }
+                    break;
+                    
+                case 'nostalgia':
+                    for (let i = 0; i < data.length; i += 4) {
+                        const r = data[i], g = data[i + 1], b = data[i + 2];
+                        data[i] = Math.min(255, (r * 0.393 + g * 0.769 + b * 0.189) * 0.8 + r * 0.2) * 1.1;
+                        data[i + 1] = Math.min(255, (r * 0.349 + g * 0.686 + b * 0.168) * 0.8 + g * 0.2) * 1.1;
+                        data[i + 2] = Math.min(255, (r * 0.272 + g * 0.534 + b * 0.131) * 0.8 + b * 0.2) * 0.8;
+                    }
+                    break;
+                    
+                case 'polaroid':
+                    for (let i = 0; i < data.length; i += 4) {
+                        const contrast = 1.2;
+                        const brightness = 1.1;
+                        data[i] = Math.min(255, ((data[i] - 128) * contrast + 128) * brightness * 1.1);
+                        data[i + 1] = Math.min(255, ((data[i + 1] - 128) * contrast + 128) * brightness * 1.1);
+                        data[i + 2] = Math.min(255, ((data[i + 2] - 128) * contrast + 128) * brightness * 1.1);
+                    }
+                    break;
+                    
+                case 'sunset':
+                    for (let i = 0; i < data.length; i += 4) {
+                        const r = data[i], g = data[i + 1], b = data[i + 2];
+                        data[i] = Math.min(255, (r * 0.393 + g * 0.769 + b * 0.189) * 0.4 + r * 0.6) * 1.5;
+                        data[i + 1] = Math.min(255, (r * 0.349 + g * 0.686 + b * 0.168) * 0.4 + g * 0.6) * 1.2;
+                        data[i + 2] = Math.min(255, (r * 0.272 + g * 0.534 + b * 0.131) * 0.4 + b * 0.6) * 0.9;
+                    }
+                    break;
+                    
+                case 'moonlight':
+                    for (let i = 0; i < data.length; i += 4) {
+                        const r = data[i], g = data[i + 1], b = data[i + 2];
+                        const gray = r * 0.299 + g * 0.587 + b * 0.114;
+                        data[i] = Math.min(255, gray * 0.7 + b * 0.3) * 0.95;
+                        data[i + 1] = Math.min(255, gray * 0.7 + b * 0.3) * 1.05;
+                        data[i + 2] = Math.min(255, gray * 0.7 + b * 1.3) * 1.1;
+                    }
+                    break;
+            }
+            
+            return imageData;
+        }
+
+        // Capture photo
+        function capturePhoto() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0);
+            
+            // Apply filter
+            let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            imageData = applyFilter(imageData);
+            ctx.putImageData(imageData, 0, 0);
+            
+            // Flash effect
+            flash.classList.add('active');
+            setTimeout(() => flash.classList.remove('active'), 300);
+            
+            return canvas.toDataURL('image/jpeg', 0.9);
+        }
+
+        // Show countdown
+        function showCountdown(number) {
+            return new Promise((resolve) => {
+                countdownNumber.textContent = number;
+                countdown.classList.add('active');
+                setTimeout(() => {
+                    countdown.classList.remove('active');
+                    resolve();
+                }, 1000);
+            });
+        }
+
+        // Take sequence of photos
+        async function takePhotoSequence() {
+            if (isCapturing) return;
+            isCapturing = true;
+            startBtn.disabled = true;
+
+            for (let i = 0; i < 4; i++) {
+                // Countdown
+                for (let count = 3; count > 0; count--) {
+                    await showCountdown(count);
+                }
+                
+                // Capture
+                const photoData = capturePhoto();
+                photos.push(photoData);
+                
+                // Add to strip
+                const img = document.createElement('img');
+                img.src = photoData;
+                img.className = 'photo-item';
+                photoStrip.appendChild(img);
+                
+                updatePhotoCount();
+                
+                // Wait before next photo (except for last one)
+                if (i < 3) {
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                }
+            }
+
+            isCapturing = false;
+            startBtn.disabled = false;
+            downloadBtn.disabled = false;
+        }
+
+        // Update photo count
+        function updatePhotoCount() {
+            photoCount.textContent = `${photos.length}/4 photos`;
+        }
+
+        // Clear photos
+        function clearPhotos() {
+            photos = [];
+            photoStrip.innerHTML = '';
+            updatePhotoCount();
+            downloadBtn.disabled = true;
+        }
+
+        // Download photo strip
+        function downloadStrip() {
+            if (photos.length === 0) return;
+
+            const stripCanvas = document.createElement('canvas');
+            const stripCtx = stripCanvas.getContext('2d');
+            
+            const photoWidth = 400;
+            const photoHeight = 300;
+            const padding = 20;
+            const borderWidth = 10;
+            
+            stripCanvas.width = photoWidth + (padding * 2) + (borderWidth * 2);
+            stripCanvas.height = (photoHeight * photos.length) + (padding * (photos.length + 1)) + (borderWidth * 2);
+            
+            // Background
+            stripCtx.fillStyle = '#f0f0f0';
+            stripCtx.fillRect(0, 0, stripCanvas.width, stripCanvas.height);
+            
+            // Border
+            stripCtx.fillStyle = '#8b4513';
+            stripCtx.fillRect(0, 0, stripCanvas.width, stripCanvas.height);
+            stripCtx.fillStyle = '#f0f0f0';
+            stripCtx.fillRect(borderWidth, borderWidth, 
+                stripCanvas.width - (borderWidth * 2), 
+                stripCanvas.height - (borderWidth * 2));
+            
+            // Add photos
+            photos.forEach((photoData, index) => {
+                const img = new Image();
+                img.src = photoData;
+                const y = borderWidth + padding + (index * (photoHeight + padding));
+                stripCtx.drawImage(img, borderWidth + padding, y, photoWidth, photoHeight);
+                
+                // White border around photo
+                stripCtx.strokeStyle = 'white';
+                stripCtx.lineWidth = 3;
+                stripCtx.strokeRect(borderWidth + padding, y, photoWidth, photoHeight);
+            });
+            
+            // Download
+            const link = document.createElement('a');
+            link.download = `photomaton_${Date.now()}.jpg`;
+            link.href = stripCanvas.toDataURL('image/jpeg', 0.95);
+            link.click();
+        }
+
+        // Filter selection
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                
+                // Apply filter to video in real-time
+                video.className = '';
+                if (currentFilter !== 'none') {
+                    video.classList.add(`filter-${currentFilter}`);
+                }
+            });
+        });
+
+        // Event listeners
+        startBtn.addEventListener('click', takePhotoSequence);
+        clearBtn.addEventListener('click', clearPhotos);
+        downloadBtn.addEventListener('click', downloadStrip);
+
+        // Initialize
+        startWebcam();
+    </script>
+</body>
+
+</html>
