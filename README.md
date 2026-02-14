@@ -2,7 +2,7 @@
 
 A browser-based photobooth application that recreates the nostalgic experience of classic photo strip booths from the 1960s-1980s. Built with vanilla JavaScript, HTML5, and CSS3.
 
-**Live Demo:** [https://deznow.github.io/vintage-photomaton](https://deznow.github.io/vintage-photomaton)
+**Live Demo:** [https://deznow.github.io/vintage-photomaton](https://deznow.github.io/photomaton)
 
 ---
 
